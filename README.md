@@ -1,7 +1,5 @@
 # intro-to-ds-2024
-A project about something that is happening somewhere in the world somehow maybe related to bikes 
-
-Maybe even bikes and air pollution? wow
+A project where we aim to provide improvement suggestions to the bike routes in the city of Helsinki.
 
 ## Resources
 - [Canvas](https://docs.google.com/document/d/1QWejvSXaniifYWSfj8oD7vjKZFbPcpI-s3F1d9oqQH8/edit?usp=sharing)
