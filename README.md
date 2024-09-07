@@ -7,7 +7,8 @@ A project where we aim to provide improvement suggestions to the bike routes in 
 - create a .env file into the frontend directory and add your google api key
 
 `GOOGLE_MAPS_API_KEY="{your key}"`
-- run ',/buildrun.sh' 
+- run `buildrun.sh`
+- go to the url given to you by flask
 
 ## Resources
 - [Canvas](https://docs.google.com/document/d/1QWejvSXaniifYWSfj8oD7vjKZFbPcpI-s3F1d9oqQH8/edit?usp=sharing)
