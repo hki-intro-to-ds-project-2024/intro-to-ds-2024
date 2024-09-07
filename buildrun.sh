@@ -6,4 +6,5 @@ cd frontend
 npm run build
 
 cd ../backend
-python3 main.py
+poetry install
+poetry run python main.py

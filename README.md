@@ -2,8 +2,11 @@
 A project where we aim to provide improvement suggestions to the bike routes in the city of Helsinki.
 
 ## How to run
-- Have python installed
+- Have python installed with poetry
 - Have some version of npm installed
+- create a .env file into the frontend directory and add your google api key
+
+`GOOGLE_MAPS_API_KEY="{your key}"`
 - run ',/buildrun.sh' 
 
 ## Resources
