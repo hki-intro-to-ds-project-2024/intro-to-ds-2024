@@ -1,8 +1,5 @@
 from flask import Flask, send_file, send_from_directory
-from pathlib import Path
-
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend/dist/"
-DEVELOPMENT_ENV = True
+from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
 
 app = Flask("bicycle-map-app")
 

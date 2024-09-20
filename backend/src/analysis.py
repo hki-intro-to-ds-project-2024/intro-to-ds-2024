@@ -1,21 +1,16 @@
 DATA_DIR = Path(__file__).parent / "data"
 
-class Node:
-    def __init__(self, longitude, latitude):
-        self.longitude = longitude
-        self.latitude  = latitude
-
 class Analytics:
     def __init__(self):
-        self.nodes = []
+        self.nodes: List[Node] = []
 
-    def add_node(self, node):
+    def add_node(self, node: Node):
         self.nodes.append(node)
 
 
 analytics = Analytics()
 
-# import csv
+# read csv
 
 """
 for row in data: 
