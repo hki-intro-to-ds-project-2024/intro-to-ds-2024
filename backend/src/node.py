@@ -4,5 +4,5 @@ class Node:
         self.longitude = longitude
         self.latitude  = latitude
 
-    def __repr__(self):
-        return "lol"
+    def __str__(self):
+        return f"({self.latitude}, {self.longitude})"

@@ -8,8 +8,6 @@ class Analytics:
     def add_node(self, node: Node):
         self.nodes.append(node)
 
-
-
 if __name__ == "__main__":
     analytics = Analytics()
 
