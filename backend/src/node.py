@@ -2,11 +2,10 @@ import geopy.distance
 
 class Node:
     def __init__(self, longitude: int, latitude: int):
-        self.longitude = longitude
-        self.latitude  = latitude
+        self.coords = (longitude, latitude)
 
     def __repr__(self):
-        return f"(lat:{self.latitude}, long:{self.longitude})"
+        return f"(lat:{self.coords[0]}, long:{self.coords[1]})"
 
 
 def node_distance_from_node(first_node: Node, second_node: Node) -> float:
