@@ -6,7 +6,7 @@ authors = ["Miika Matias <miikapiiparinen24@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 numpy = "^2.1.1"
 Flask = "^3.0.3"
 
