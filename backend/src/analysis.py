@@ -1,4 +1,5 @@
-DATA_DIR = Path(__file__).parent / "data"
+
+from node import Node
 
 class Analytics:
     def __init__(self):
@@ -8,14 +9,25 @@ class Analytics:
         self.nodes.append(node)
 
 
-analytics = Analytics()
 
-# read csv
+if __name__ == "__main__":
+    analytics = Analytics()
 
-"""
-for row in data: 
-    longitude = ???
-    latitude  =  ???
-    node = Node(longitude, latitude)
-    analytics.nodes.append(node)
-"""
+    # read csv
+    """
+    for row in data: 
+        longitude = ???
+        latitude  =  ???
+        node = Node(longitude, latitude)
+        analytics.nodes.append(node)
+    """
+
+    latlongs = [(60.192059, 24.945831), (60.191, 25), (60.192059, 24.945831)]
+
+    for latlong in latlongs: 
+        longitude = latlong[0]
+        latitude  = latlong[1]
+        node = Node(longitude, latitude)
+        analytics.nodes.append(node)
+
+    print(analytics.nodes)
