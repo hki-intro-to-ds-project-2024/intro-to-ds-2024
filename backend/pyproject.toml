@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 numpy = "^2.1.1"
 Flask = "^3.0.3"
+pandas = "^2.2.3"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,5 +1,7 @@
 
 from node import Node
+import pandas as pd
+from config import DATA_DIR
 
 class Analytics:
     def __init__(self):
@@ -11,7 +13,9 @@ class Analytics:
 if __name__ == "__main__":
     analytics = Analytics()
 
-    # read csv
+    
+    data = pd.read_csv(DATA_DIR / "2021/2021-04.csv")
+    print(data)
     """
     for row in data: 
         longitude = ???
