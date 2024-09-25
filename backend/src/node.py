@@ -6,3 +6,5 @@ class Node:
 
     def __str__(self):
         return f"({self.latitude}, {self.longitude})"
+    def __repr__(self):
+        return f"({self.latitude}, {self.longitude})"
