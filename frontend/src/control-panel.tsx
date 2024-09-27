@@ -3,15 +3,21 @@ import * as React from 'react';
 function ControlPanel() {
   return (
     <div className="control-panel">
-      <h3>Bicycle map</h3>
+      <h3>Helsinki Bicycle Map Project</h3>
       <p>
-        Welcome to [bicycle bs project] : ) here you can see the map of the world for some reason.
+        Click on the map to add an additional bike stop and see how it affects the other edges.
       </p>
       <div className="links">
         <a
-          href="https://github.com/hki-intro-to-ds-project-2024/intro-to-ds-2024/commits/main/"
+          href="https://codesandbox.io/s/github/visgl/react-google-maps/tree/main/examples/drawing"
           target="_new">
-          Check out the repository ↗
+          Try on CodeSandbox ↗
+        </a>
+
+        <a
+          href="https://github.com/visgl/react-google-maps/tree/main/examples/drawing"
+          target="_new">
+          View Code ↗
         </a>
       </div>
     </div>

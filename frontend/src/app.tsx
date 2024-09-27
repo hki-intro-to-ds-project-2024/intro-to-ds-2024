@@ -11,7 +11,6 @@ const API_KEY =
 const App = () => (
   <APIProvider apiKey={API_KEY}>
     <BikeMap/>
-    <ControlPanel/>
   </APIProvider>
 );
 
