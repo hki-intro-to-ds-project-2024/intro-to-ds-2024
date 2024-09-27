@@ -15,6 +15,7 @@ class Analytics:
         return [Node(x, y) for x, y in zip(data_stops['x'], data_stops['y'])]
 
 
+
 if __name__ == "__main__":    
     data_rides = pd.read_csv(DATA_DIR / "rides_2021/2021-04.csv")
     print(analytics.nodes)

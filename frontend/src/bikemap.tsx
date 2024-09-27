@@ -1,4 +1,6 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
+import axios from 'axios'
+
 import {
     ControlPosition,
     AdvancedMarker,
@@ -10,6 +12,8 @@ import {
     Pin,
     useAdvancedMarkerRef
   } from '@vis.gl/react-google-maps';
+
+
 import {useDrawingManager} from './use-drawing-manager';
 import ControlPanel from './control-panel';
 
@@ -25,6 +29,15 @@ const Z_INDEX_SELECTED = data.length;
 const Z_INDEX_HOVER = data.length + 1;
 
 const BikeMap = () => {
+    useEffect(() => {
+        console.log('effect')
+        axios
+          .get('http://localhost:5000/nodes')
+          .then(response => {
+            console.log(response.data)
+          })
+      }, [])
+    
     const drawingManager = useDrawingManager();
     const [markers] = useState(data);
 
