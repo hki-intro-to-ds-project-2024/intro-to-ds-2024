@@ -1,6 +1,9 @@
 # Data info
 This document contains a paragraph for each directory in backend/data
 
+### eda_arhive
+interesting documents and insights we've gathered
+
 ### rides_2021
 Source: https://hri.fi/data/en_GB/dataset/helsingin-ja-espoon-kaupunkipyorilla-ajatut-matkat
 
