@@ -3,6 +3,7 @@
 git pull --rebase --autostash
 
 cd frontend
+npm install
 npm run build
 
 cd ../backend

@@ -3,6 +3,8 @@ import geopy.distance
 class Node:
     def __init__(self, longitude: int, latitude: int):
         self.coords = (longitude, latitude)
+        self.rides = []
+        self.distance = []
 
     def __repr__(self):
         return f"(lat:{self.coords[0]}, long:{self.coords[1]})"
@@ -22,8 +24,3 @@ def node_distance_from_node(first_node: Node, second_node: Node) -> float:
     coords_1 = (first_node.latitude, first_node.longitude)
     coords_2 = (second_node.latitude, second_node.longitude)
     return geopy.distance.geodesic(coords_1, coords_2).km
-
-if __name__ == "__main__":
-    coords_1 = Node(2,0)
-    coords_2 = Node(0, 0)
-    print(node_distance_from_node(coords_1, coords_2))
