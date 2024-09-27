@@ -15,8 +15,7 @@ def file_paths(path):
 
 @app.route("/nodes")
 def all_nodes():
-    #Return all created nodes in json format
-    nodes = Analytics._get_node_locs()
+    nodes = Analytics.node
     return jsonify(nodes)
 
 if __name__ == "__main__":

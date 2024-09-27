@@ -5,7 +5,7 @@ from src.config import DATA_DIR
 
 class Analytics:
     def __init__(self):
-        self.node = self._get_node_locs()
+        self.node = self._get_node_locs(self)
 
     def add_node(self, node: Node) -> None:
         self.nodes.append(node)
