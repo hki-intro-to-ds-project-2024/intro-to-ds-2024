@@ -1,4 +1,4 @@
-from flask import Flask, send_file, send_from_directory
+from flask import Flask, send_file, send_from_directory, jsonify
 from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
 from src.analysis import Analytics
 
@@ -13,6 +13,12 @@ def index():
 @app.route("/<path:path>")
 def file_paths(path):
     return send_from_directory(FRONTEND_DIR,path)
+
+@app.route("/nodes")
+def all_nodes():
+    #Return all created nodes in json format
+    nodes = Analytics._get_node_locs()
+    return jsonify(nodes)
 
 if __name__ == "__main__":
     app.run(debug=DEVELOPMENT_ENV)
