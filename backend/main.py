@@ -2,7 +2,6 @@ from flask import Flask, send_file, send_from_directory, jsonify
 from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
 from src.analysis import Analytics
 
-
 app = Flask("bicycle-map-app")
 analytics = Analytics()
 
