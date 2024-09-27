@@ -13,7 +13,7 @@ class Node:
         }
 
     def __repr__(self):
-        return f"(lat:{self.coords[0]}, long:{self.coords[1]})"
+        return f"(lat:{self.coords[0]}, lng:{self.coords[1]})"
 
 
 def node_distance_from_node(first_node: Node, second_node: Node) -> float:
