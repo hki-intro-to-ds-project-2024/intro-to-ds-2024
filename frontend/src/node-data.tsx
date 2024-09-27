@@ -1,4 +1,4 @@
-type NodeNata = Array<{
+type NodeData = Array<{
     id: string;
     position: google.maps.LatLngLiteral;
     type: 'pin' | 'html';
@@ -6,7 +6,7 @@ type NodeNata = Array<{
   }>;
   
 function getData() {
-    const data: NodeNata = [];
+    const data: NodeData = [];
   
     // create 50 random markers
     for (let index = 0; index < 50; index++) {
