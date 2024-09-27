@@ -20,10 +20,8 @@ export type AnchorPointName = keyof typeof AdvancedMarkerContext;
 const BikeMap = () => {
   const drawingManager = useDrawingManager();
   
-  // Fetch node data from the custom hook
   const nodes = useNodeData();
 
-  // Derived zIndex based on the number of nodes
   const Z_INDEX_SELECTED = nodes.length;
   const Z_INDEX_HOVER = nodes.length + 1;
 
