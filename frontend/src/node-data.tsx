@@ -1,28 +1,49 @@
-type NodeData = Array<{
-    id: string;
-    position: google.maps.LatLngLiteral;
-    type: 'pin' | 'html';
-    zIndex: number;
-  }>;
-  
-function getData() {
-    const data: NodeData = [];
-  
-    // create 50 random markers
-    for (let index = 0; index < 50; index++) {
-      data.push({
-        id: String(index),
-        position: {lat: rnd(53.52, 53.63), lng: rnd(9.88, 10.12)},
-        zIndex: index,
-        type: Math.random() < 0.5 ? 'pin' : 'html'
-      });
-    }
-  
-    return data;
-  }
-  
-  function rnd(min: number, max: number) {
-    return Math.random() * (max - min) + min;
-  }
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
-export default getData;
+type LatLngLiteral = {
+  lat: number;
+  lng: number;
+};
+
+type NodeData = Array<{
+  id: string;
+  position: LatLngLiteral;
+  type: 'pin' | 'html';
+  zIndex: number;
+}>;
+
+const useNodeData = () => {
+  const [data, setData] = useState<NodeData>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/nodes');
+        
+        console.log('Response For Node Request:', response);
+        const backendNodes = Object.values(response.data); 
+
+        const newData = backendNodes.map((node: any) => ({
+          id: node.id,
+          position: {
+            lat: node.position.lat,
+            lng: node.position.lng,
+          },
+          zIndex: node.id, 
+          type: 'pin', 
+        }));
+
+          setData(newData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return data;
+};
+
+export default useNodeData;
