@@ -19,11 +19,13 @@ const useNodeData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/nodes');
+        const response = await axios.get('http://127.0.0.1:5000/nodes?time_start=2023-01-01T00:00:00&time_end=2025-01-02T00:00:00&zero_rides=false&proportion=0.5');
         
         console.log('Response For Node Request:', response);
         const backendNodes = Object.values(response.data); 
-
+  
+        console.log("Response data:", backendNodes);
+  
         const newData = backendNodes.map((node: any) => ({
           id: node.id,
           position: {
@@ -33,15 +35,16 @@ const useNodeData = () => {
           zIndex: node.id, 
           type: 'pin', 
         }));
-
-          setData(newData);
+  
+        setData(newData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, []);
+  
 
   return data;
 };

@@ -1,8 +1,6 @@
 import psycopg2
 import os
-from random import randrange
 from src.config import MIGRATIONS_DIR, TIMESCALE_CONN_STRING
-from src.node import Node
 
 class TimescaleClient:
 
@@ -10,19 +8,16 @@ class TimescaleClient:
         self.conn = psycopg2.connect(TIMESCALE_CONN_STRING)
         self.cur = self.conn.cursor()
 
-    def add_stop(self, node: Node) -> None:
+    def add_stop(self, lat, lng, zero_rides, total_rides) -> None:
         self.conn.commit()
         self.cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
         try:
-            x = randrange(0, 10)
-            y = randrange(10, 100)
             cmd = "INSERT INTO stops (lat, lng, zero_rides, total_rides) VALUES (%s, %s, %s, %s)"
-            self.cur.execute(cmd, (node.coords[0], node.coords[1], x, y))
+            self.cur.execute(cmd, (lat, lng, zero_rides, total_rides))
             self.conn.commit()
         except psycopg2.Error:
             self.cur.execute("ROLLBACK")
             raise
-
     def apply_schema(self, schema_file: str) -> None:
         full_path = os.path.join(MIGRATIONS_DIR, schema_file)
 
@@ -31,3 +26,9 @@ class TimescaleClient:
 
         self.cur.execute(schema_sql)
         self.conn.commit()
+
+    def get_nodes(self, time_start, time_end, zero_rides, proportion) -> list:
+        self.cur.execute(f"SELECT lat, lng FROM stops;")
+        nodes = [(lat, lng) for (lat, lng,) in self.cur.fetchall()]
+        print(nodes)
+        return nodes

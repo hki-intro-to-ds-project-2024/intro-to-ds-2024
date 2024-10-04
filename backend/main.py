@@ -1,4 +1,4 @@
-from flask import Flask, send_file, send_from_directory, jsonify
+from flask import Flask, send_file, send_from_directory, jsonify, request
 from flask_cors import CORS
 from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
 from src.analysis import Analytics
@@ -16,9 +16,18 @@ def index():
 def file_paths(path):
     return send_from_directory(FRONTEND_DIR,path)
 
-@app.route("/nodes/{:min_amount}{:percentage}")
+@app.route("/nodes")
 def all_nodes():
-    return jsonify(analytics.get_nodes_json())
+    """
+    Example request: /nodes?time_start=2022-01-01T00:00:00&time_end=2022-01-02T00:00:00&zero_rides=false&proportion=0.5
+    """
+    time_start = request.args.get('time_start')
+    time_end = request.args.get('time_end')
+    zero_rides = request.args.get('zero_rides')
+    proportion = request.args.get('proportion')
+    nodes_json = analytics.get_nodes_json(time_start, time_end, zero_rides, proportion)
+    print(nodes_json)
+    return jsonify(nodes_json)
 
 if __name__ == "__main__":
     app.run(debug=DEVELOPMENT_ENV)
