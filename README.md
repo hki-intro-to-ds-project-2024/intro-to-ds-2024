@@ -2,6 +2,7 @@
 A project where we aim to provide improvement suggestions to the bike routes in the city of Helsinki.
 
 ## How to run
+- Have docker installed for easy timescale db 
 - Have python installed with poetry
 - Have some version of npm installed
 - create a .env file into the frontend directory and add your google api key
