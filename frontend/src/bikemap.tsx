@@ -17,9 +17,7 @@ import useNodeData from './node-data'; // Import your custom hook
 
 export type AnchorPointName = keyof typeof AdvancedMarkerContext;
 
-const BikeMap = () => {
-  const drawingManager = useDrawingManager();
-  
+const BikeMap = () => {  
   const nodes = useNodeData();
 
   const Z_INDEX_SELECTED = nodes.length;
