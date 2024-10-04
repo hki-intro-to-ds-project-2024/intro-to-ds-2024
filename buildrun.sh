@@ -8,7 +8,9 @@ git pull --rebase --autostash
 cd frontend
 npm install
 npm run build
+npm run start &
 
 cd ../backend
 poetry install
 poetry run python main.py
+
