@@ -19,7 +19,7 @@ const useNodeData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/nodes?time_start=2023-01-01T00:00:00&time_end=2025-01-02T00:00:00&zero_rides=false&proportion=0.5');
+        const response = await axios.get('http://127.0.0.1:5000/nodes?time_start=2022-01-01T00:00:00&time_end=2025-01-02T00:00:00&zero_rides=3&proportion=0.25');
         
         console.log('Response For Node Request:', response);
         const backendNodes = Object.values(response.data); 
