@@ -29,9 +29,13 @@ class TimescaleClient:
 
     def get_nodes(self, time_start, time_end, zero_rides=0, proportion=0) -> list:
         cmd = f"""SELECT lat, lng FROM stops WHERE zero_rides >= {zero_rides} 
-                AND total_rides > 0 AND (zero_rides * 1.0 / total_rides) >= {proportion}
-                AND time >= '{time_start}' AND time < '{time_end}';"""
-        print(cmd)
-        self.cur.execute(cmd)
-        nodes = [(lat, lng) for (lat, lng,) in self.cur.fetchall()]
-        return nodes
+            AND total_rides > 0 AND (zero_rides * 1.0 / total_rides) >= {proportion}
+            AND time >= '{time_start}' AND time < '{time_end}';"""
+        try:
+            self.cur.execute(cmd)
+            nodes = [(lat, lng) for (lat, lng,) in self.cur.fetchall()]
+            print(cmd)
+            return nodes
+        except:
+            print("Invalid query", cmd)
+            return []
