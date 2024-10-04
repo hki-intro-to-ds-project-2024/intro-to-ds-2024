@@ -1,12 +1,15 @@
 
 from src.node import Node
 from src.config import DATA_DIR
+from src.timescale import TimescaleClient
 import pandas as pd
 import json
 
 class Analytics:
     def __init__(self):
         self.nodes = self._get_node_locs()
+        self._timescale_connection = TimescaleClient()
+        self._timescale_connection.apply_schema("zero_rides.sql")
 
     def add_node(self, node: Node) -> None:
         self.nodes.append(node)

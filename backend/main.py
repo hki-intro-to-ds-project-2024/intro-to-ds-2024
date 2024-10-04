@@ -16,7 +16,7 @@ def index():
 def file_paths(path):
     return send_from_directory(FRONTEND_DIR,path)
 
-@app.route("/nodes")
+@app.route("/nodes/{:min_amount}{:percentage}")
 def all_nodes():
     return jsonify(analytics.get_nodes_json())
 
