@@ -12,19 +12,35 @@ function ControlPanel() {
         <tbody>
           <tr>
             <td><label htmlFor="minimum-zero-rides">Minimum number of zero-rides</label></td>
-            <td><input id="minimum-zero-rides" type="number"></input></td>
+            <td><input id="minimum-zero-rides" type="number" step="1"></input></td>
           </tr>
           <tr>
             <td><label htmlFor="minimum-proportion">Minimum proportion of zero-rides</label></td>
-            <td><input id="minimum-proportion" type="number" step="0.01"></input></td>
+            <td>
+              <input
+                id="minimum-proportion"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                onChange={e => (document.getElementById('minimum-proportion-value')!.innerHTML = e.currentTarget.value)}
+              />
+              <span id="minimum-proportion-value">1</span>
+            </td>
           </tr>
           <tr>
-            <td><label htmlFor="date-start">Date start (YYYY-MM-DD)</label></td>
-            <td><input id="date-start" type="date"></input></td>
+            <td><label htmlFor="date-start">Date start (YYYY-MM-DD HH:MM:SS)</label></td>
+            <td>
+              <input id="date-start-date" type="date"></input>
+              <input id="date-start-time" type="time"></input>
+            </td>
           </tr>
           <tr>
-            <td><label htmlFor="date-end">Date end (YYYY-MM-DD)</label></td>
-            <td><input id="date-end" type="date"></input></td>
+            <td><label htmlFor="date-end">Date end (YYYY-MM-DD HH:MM:SS)</label></td>
+            <td>
+              <input id="date-end-date" type="date"></input>
+              <input id="date-end-time" type="time"></input>
+            </td>
           </tr>
         </tbody>
       </table>
