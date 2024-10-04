@@ -22,6 +22,7 @@ export function renderToDom(container: HTMLElement) {
 
   root.render(
     <React.StrictMode>
+      <ControlPanel/>
       <App />
     </React.StrictMode>
   );

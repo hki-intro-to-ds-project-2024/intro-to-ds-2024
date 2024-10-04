@@ -18,6 +18,7 @@ class TimescaleClient:
         except psycopg2.Error:
             self.cur.execute("ROLLBACK")
             raise
+
     def apply_schema(self, schema_file: str) -> None:
         full_path = os.path.join(MIGRATIONS_DIR, schema_file)
 
@@ -27,7 +28,7 @@ class TimescaleClient:
         self.cur.execute(schema_sql)
         self.conn.commit()
 
-    def get_nodes(self, time_start, time_end, zero_rides=0, proportion=0) -> list:
+    def get_nodes(self, time_start, time_end, zero_rides, proportion) -> list:
         cmd = f"""SELECT lat, lng FROM stops WHERE zero_rides >= {zero_rides} 
             AND total_rides > 0 AND (zero_rides * 1.0 / total_rides) >= {proportion}
             AND time >= '{time_start}' AND time < '{time_end}';"""
