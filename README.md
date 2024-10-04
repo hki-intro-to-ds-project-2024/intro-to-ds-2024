@@ -1,5 +1,5 @@
 # intro-to-ds-2024
-A project where we aim to provide improvement suggestions to the bike routes in the city of Helsinki.
+A project where we aim to provide maintanance suggestions on the bikestops of the city of Helsinki. Uses a flask backend with a timescale database and typescript/react frontend. Analytics by Maarja Mustimets done with R.
 
 ## How to run
 - Have docker installed for easy timescale db 
