@@ -6,20 +6,21 @@ type LatLngLiteral = {
   lng: number;
 };
 
-type NodeData = Array<{
+export type NodeData = Array<{
   id: string;
   position: LatLngLiteral;
   type: 'pin' | 'html';
   zIndex: number;
 }>;
-
-const useNodeData = () => {
+const useNodeData = (props) => {
   const [data, setData] = useState<NodeData>([]);
+
+  console.log("Called useNodeData with:", props.zeroRides, props.proportion, props.dateStart, props.dateEnd, props.timeStart, props.timeEnd);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/nodes?time_start=2022-01-01T00:00:00&time_end=2025-01-02T00:00:00&zero_rides=3&proportion=0.25');
+        const response = await axios.get(`http://127.0.0.1:5000/nodes?time_start=${props.dateStart}T00:00:00&time_end=${props.dateEnd}T00:00:00&zero_rides=${props.zeroRides}&proportion=${props.proportion}`);
         
         console.log('Response For Node Request:', response);
         const backendNodes = Object.values(response.data); 
@@ -43,7 +44,12 @@ const useNodeData = () => {
     };
   
     fetchData();
-  }, []);
+  }, [props.zeroRides,
+    props.proportion,
+    props.dateStart,
+    props.dateEnd,
+    props.timeStart,
+    props.timeEnd]);
   
 
   return data;

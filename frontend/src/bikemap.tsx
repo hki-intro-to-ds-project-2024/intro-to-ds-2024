@@ -1,9 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  ControlPosition,
   AdvancedMarker,
   AdvancedMarkerProps,
-  APIProvider,
   AdvancedMarkerContext,
   InfoWindow,
   Map,
@@ -11,15 +9,19 @@ import {
   useAdvancedMarkerRef
 } from '@vis.gl/react-google-maps';
 
-import { useDrawingManager } from './use-drawing-manager';
 import ControlPanel from './control-panel';
-import useNodeData from './node-data'; // Import your custom hook
+import useNodeData from './node-data';
 
 export type AnchorPointName = keyof typeof AdvancedMarkerContext;
-
 const BikeMap = () => {  
-  const nodes = useNodeData();
+  const [dateStart, setDateStart] = useState<string | null>('2016-01-01');
+  const [dateEnd, setDateEnd] = useState<string | null>('2026-01-01');
+  const [timeStart, setTimeStart] = useState<string | null>('00:00');
+  const [timeEnd, setTimeEnd] = useState<string | null>('00:00');
+  const [zeroRides, setZeroRides] = useState(0);
+  const [proportion, setProportion] = useState(0.0);
 
+  const nodes = useNodeData({ zeroRides, proportion, dateStart, dateEnd, timeStart, timeEnd });
   const Z_INDEX_SELECTED = nodes.length;
   const Z_INDEX_HOVER = nodes.length + 1;
 
@@ -60,9 +62,29 @@ const BikeMap = () => {
     []
   );
 
+  const updateNodes = (newZeroRides: number, newProportion: number, newDateStart: string | null, newDateEnd: string | null,
+     newTimeStart: string | null, newTimeEnd: string | null) => {
+    console.log("old parameters:", zeroRides, proportion, dateStart, dateEnd, timeStart, timeEnd);
+    setZeroRides(newZeroRides);
+    setProportion(newProportion);
+    setDateStart(newDateStart);
+    setDateEnd(newDateEnd);
+    setTimeStart(newTimeStart);
+    setTimeEnd(newTimeEnd);
+    console.log("new parameters:", newZeroRides, newProportion, newDateStart, newDateEnd, newTimeStart, newTimeEnd);
+  };
+
   return (
     <>
-      <ControlPanel />
+      <ControlPanel
+        zeroRides={zeroRides}
+        proportion={proportion}
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        timeStart={timeStart}
+        timeEnd={timeEnd}
+        updateNodes={updateNodes}
+      />
       <Map
         mapId={'someMapId'}
         defaultZoom={12}
@@ -163,7 +185,6 @@ const BikeMap = () => {
   );
 };
 
-// AdvancedMarkerWithRef component definition (as in your original code)
 export const AdvancedMarkerWithRef = (
   props: AdvancedMarkerProps & {
     onMarkerClick: (marker: google.maps.marker.AdvancedMarkerElement) => void;
