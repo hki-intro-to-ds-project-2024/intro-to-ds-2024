@@ -1,12 +1,14 @@
 import psycopg2
 import os
+import logging
 from src.config import MIGRATIONS_DIR, TIMESCALE_CONN_STRING
 
 class TimescaleClient:
 
-    def __init__(self):
+    def __init__(self, logger):
         self.conn = psycopg2.connect(TIMESCALE_CONN_STRING)
         self.cur = self.conn.cursor()
+        self.logger = logger
 
     def add_stops(self, stops) -> None:
         self.conn.commit()

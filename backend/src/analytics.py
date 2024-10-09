@@ -12,7 +12,7 @@ import logging
 class Analytics:
     def __init__(self, logger):
         self._logger = logger
-        self._timescale_connection = TimescaleClient()
+        self._timescale_connection = TimescaleClient(logger)
         self__model = Prophet()
         self._logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
