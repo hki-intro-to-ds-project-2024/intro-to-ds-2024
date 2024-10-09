@@ -8,15 +8,28 @@ class TimescaleClient:
         self.conn = psycopg2.connect(TIMESCALE_CONN_STRING)
         self.cur = self.conn.cursor()
 
-    def add_stop(self, lat, lng, zero_rides, total_rides) -> None:
+    def add_stops(self, stops) -> None:
         self.conn.commit()
         self.cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
         try:
-            cmd = "INSERT INTO stops (lat, lng, zero_rides, total_rides) VALUES (%s, %s, %s, %s)"
-            self.cur.execute(cmd, (lat, lng, zero_rides, total_rides))
+            cmd = "INSERT INTO stops (stop_name, lat, lng) VALUES (%s, %s, %s)"
+            self.cur.executemany(cmd, stops)
             self.conn.commit()
-        except psycopg2.Error:
+        except psycopg2.Error as e:
             self.cur.execute("ROLLBACK")
+            print(e)
+            raise
+
+    def add_rides(self, nodes) -> None:
+        self.conn.commit()
+        self.cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        try:
+            cmd = "INSERT INTO rides (time, lat, lng, zero_rides, total_rides) VALUES (%s, %s, %s, %s, %s)"
+            self.cur.executemany(cmd, nodes)
+            self.conn.commit()
+        except psycopg2.Error as e:
+            self.cur.execute("ROLLBACK")
+            print(e)
             raise
 
     def apply_schema(self, schema_file: str) -> None:

@@ -2,11 +2,18 @@ from flask import Flask, send_file, send_from_directory, jsonify, request
 from flask_cors import CORS
 from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
 from src.analytics import Analytics
+import logging
 
 app = Flask("bicycle-map-app")
 CORS(app)
 
-analytics = Analytics()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
+analytics = Analytics(logger=logger.getChild("analytics"))
 
 @app.route("/")
 def index():
@@ -26,8 +33,9 @@ def all_nodes():
     zero_rides = request.args.get('zero_rides')
     proportion = request.args.get('proportion')
     nodes_json = analytics.get_nodes_json(time_start, time_end, zero_rides, proportion)
-    print(nodes_json)
+    logger.info(nodes_json)
     return jsonify(nodes_json)
 
 if __name__ == "__main__":
     app.run(debug=DEVELOPMENT_ENV)
+

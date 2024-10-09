@@ -15,6 +15,7 @@ flask-cors = "^5.0.0"
 psycopg = "^3.2.3"
 psycopg2 = "^2.9.9"
 prophet = "^1.1.6"
+logging = "^0.4.9.6"
 
 [build-system]
 requires = ["poetry-core"]
