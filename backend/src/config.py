@@ -7,4 +7,6 @@ MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 DEVELOPMENT_ENV = True
 
 TIMESCALE_CONN_STRING = "postgres://postgres:password@localhost/postgres"
-INITIALIZE_DATABASE = False
+INITIALIZE_DATABASE = True
+
+RIDE_BATCH_SIZE = 1000

@@ -1,10 +1,10 @@
 
-from src.config import DATA_DIR, INITIALIZE_DATABASE
+from src.config import DATA_DIR, INITIALIZE_DATABASE, RIDE_BATCH_SIZE
 from src.timescale import TimescaleClient
 from random import randrange
 from time import sleep
 from prophet import Prophet
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import pandas as pd
 import json
 import logging
@@ -46,17 +46,27 @@ class Analytics:
             executor.shutdown()    
         self._logger.info("Rides processed")
 
-        self._logger.info("Inserting rides to timescale")
-        i = 0
-        for rides in ride_list:
-            try:
-                i += 1
-                self._logger.info(f"Adding {len(rides)} rides")
-                self._timescale_connection.add_rides(rides)
-                self._logger.info(f"{i}/{len(ride_list)}")
-            except Exception as e:
-                self._logger.error(f"Error processing rides: {e}")
+        self._logger.info("Inserting rides to timescale in parallel...")
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for ride_index, rides in enumerate(ride_list):
+                futures.append(executor.submit(self._insert_rides_batch, rides, ride_index, len(ride_list), len(ride_list)))
+            for future in futures:
+                future.result()
+
         self._logger.info("Finished inserting rides to timescale")
+
+    def _insert_rides_batch(self, rides, ride_index, total_rides, total_batches):
+        """Helper function to insert a batch of rides"""
+        try:
+            self._logger.info(f"Inserting batch {ride_index + 1}/{total_batches} with {len(rides)} rides")
+            self._timescale_connection.add_rides(rides)
+        except Exception as e:
+            self._logger.info(f"Error inserting batch {ride_index + 1}/{total_batches}: {e}")
+        self._logger.info(f"completed batch {ride_index + 1}/{total_batches}")
+
+
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
         node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
@@ -88,5 +98,3 @@ def process_rides(file_name):
     print("completed rides from "+file_name)
     return rides
     
-
-            
