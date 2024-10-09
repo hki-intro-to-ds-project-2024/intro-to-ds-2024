@@ -1,5 +1,5 @@
 
-from src.config import DATA_DIR
+from src.config import DATA_DIR, INITIALIZE_DATABASE
 from src.timescale import TimescaleClient
 from random import randrange
 from time import sleep
@@ -15,11 +15,12 @@ class Analytics:
         self._timescale_connection = TimescaleClient()
         self__model = Prophet()
         self._logger.info("Timescale connection initialized")
-        self._timescale_connection.apply_schema("zero_rides.sql")
-        self._stops_to_timescale()
-        self._logger.info("stops in timescale")
-        self._rides_to_timescale()
-        self._logger.info("rides in timescale")
+        if INITIALIZE_DATABASE:
+            self._timescale_connection.apply_schema("zero_rides.sql")
+            self._stops_to_timescale()
+            self._logger.info("stops in timescale")
+            self._rides_to_timescale()
+            self._logger.info("rides in timescale")
 
     def _stops_to_timescale(self):
         data_stops = pd.read_csv(DATA_DIR / "stops/Helsingin_ja_Espoon_kaupunkipyöräasemat_avoin.csv")
@@ -56,7 +57,6 @@ class Analytics:
             except Exception as e:
                 self._logger.error(f"Error processing rides: {e}")
         self._logger.info("Finished inserting rides to timescale")
-            
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
         node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)

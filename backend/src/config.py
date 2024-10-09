@@ -7,3 +7,4 @@ MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 DEVELOPMENT_ENV = True
 
 TIMESCALE_CONN_STRING = "postgres://postgres:password@localhost/postgres"
+INITIALIZE_DATABASE = False
