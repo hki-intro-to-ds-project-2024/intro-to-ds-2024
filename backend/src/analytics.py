@@ -3,12 +3,14 @@ from src.config import DATA_DIR
 from src.timescale import TimescaleClient
 from random import randrange
 from time import sleep
+from prophet import Prophet
 import pandas as pd
 import json
 
 class Analytics:
     def __init__(self):
         self._timescale_connection = TimescaleClient()
+        self__model = Prophet()
         print("Timescale connection initialized")
         self._timescale_connection.apply_schema("zero_rides.sql")
         self._nodes_to_timescale()
@@ -30,5 +32,7 @@ class Analytics:
                 'zIndex': i
             })
         return nodes
+
+    
 
             
