@@ -10,6 +10,6 @@ CREATE TABLE rides(time TIMESTAMPTZ NOT NULL DEFAULT now(),
                         lat DOUBLE PRECISION,
                         lng DOUBLE PRECISION,
                         zero_rides BIGINT,
-                        total_rides BIGINT);
+                        zero_proportion BIGINT);
 
 SELECT create_hypertable('rides', 'time');
