@@ -4,16 +4,16 @@ from src.timescale import TimescaleClient
 from random import randrange
 from time import sleep
 from prophet import Prophet
+from prophet.serialize import model_from_json
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import pandas as pd
-import json
 import logging
 
 class Analytics:
     def __init__(self, logger):
         self._logger = logger
         self._timescale_connection = TimescaleClient(logger)
-        self__model = Prophet()
+        self__models = self._load_models()
         self._logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
             self._timescale_connection.apply_schema("zero_rides.sql")
@@ -66,7 +66,19 @@ class Analytics:
             self._logger.info(f"Error inserting batch {ride_index + 1}/{total_batches}: {e}")
         self._logger.info(f"completed batch {ride_index + 1}/{total_batches}")
 
-
+    def _load_models(self):
+        models = {}
+        with open("serialized_models.json", "r") as model_file:
+            for item in model_file:
+                item.rstrip("\n")
+                data = item.split(";")
+        
+                if len(data) == 2:
+                    id = data[0]
+                    model = model_from_json(data[1])
+                    models[id] = model
+        return models
+    
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
         node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
@@ -97,4 +109,3 @@ def process_rides(file_name):
 
     print("completed rides from "+file_name)
     return rides
-    
