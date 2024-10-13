@@ -13,7 +13,7 @@ class Analytics:
     def __init__(self, logger):
         self._logger = logger
         self._timescale_connection = TimescaleClient(logger)
-        self__models = self._load_models()
+        self.__models = self._load_models()
         self._logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
             self._timescale_connection.apply_schema("zero_rides.sql")
@@ -79,6 +79,21 @@ class Analytics:
                     models[id] = model
         return models
     
+    def predict(self, start_date, end_date):
+        predictions = {}
+        # Convert the start and end strings to datetime format
+        start_datetime = pd.to_datetime(start_date, format='%Y.%m.%d %H:%M:%S')
+        end_datetime = pd.to_datetime(end_date, format='%Y.%m.%d %H:%M:%S')
+
+        # Generate a date range with a frequency of 1 minute
+        date_range = pd.date_range(start=start_datetime, end=end_datetime, freq='min')
+
+        for station_id, model in self.__models.items():
+            future = pd.DataFrame(date_range, columns=['ds'])
+            predictions[station_id] = model.predict(future, include_history=False)[["ds", "yhat"]]
+
+        return predictions
+
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
         node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
