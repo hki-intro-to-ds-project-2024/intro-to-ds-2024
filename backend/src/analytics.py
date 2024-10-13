@@ -103,8 +103,8 @@ def process_rides(file_name):
         data_rides['Departure'],
         data_rides['y'],
         data_rides['x'],
-        data_rides['Rides_total'],
-        data_rides['Rides_zerolength']
+        data_rides['Rides_zerolength'],
+        data_rides['Rides_zerolength_prop']
     ))
 
     print("completed rides from "+file_name)

@@ -25,7 +25,7 @@ class TimescaleClient:
     def add_rides(self, nodes) -> None:
         self.conn.commit()
         try:
-            cmd = "INSERT INTO rides (time, lat, lng, zero_rides, total_rides) VALUES (%s, %s, %s, %s, %s)"
+            cmd = "INSERT INTO rides (time, lat, lng, zero_rides, zero_proportion) VALUES (%s, %s, %s, %s, %s)"
             self.cur.executemany(cmd, nodes)
             self.conn.commit()
         except psycopg2.Error as e:
@@ -44,8 +44,8 @@ class TimescaleClient:
         self.conn.commit()
 
     def get_nodes(self, time_start, time_end, zero_rides, proportion) -> list:
-        cmd = f"""SELECT lat, lng FROM stops WHERE zero_rides >= {zero_rides} 
-            AND total_rides > 0 AND (zero_rides * 1.0 / total_rides) >= {proportion}
+        cmd = f"""SELECT DISTINCT lat, lng FROM rides WHERE zero_rides >= {zero_rides} 
+            AND total_rides > 0 AND zero_proportion >= {proportion}
             AND time >= '{time_start}' AND time < '{time_end}';"""
         try:
             self.cur.execute(cmd)
