@@ -1,0 +1,220 @@
+---
+title: "Zero-length rides in Helsinki bikeshare"
+author: "Miika Piiparinen, Hamid Aebadi, Maarja Mustimets"
+date: "2024-10-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(data.table)
+library(tidytable)
+library(lubridate) # for working with dates
+library(ggplot2)
+library(viridis) # for colours
+library(ggmap)
+
+library(knitr)
+#library(kableExtra)
+```
+
+```{r datain, include=FALSE}
+folder <- dirname(rstudioapi::getSourceEditorContext()$path)
+folder_rides <- strsplit(folder, "intro-to-ds-2024/data") %>% paste0("data_too_big_for_git")
+
+#*--- Stations as reported by HSL --------------------
+stations_HSL <- read.csv(paste0(folder, "/stops/Helsingin_ja_Espoon_kaupunkipyöräasemat_avoin.csv")) %>%
+  mutate(across(all_of(c("FID","ID")), as.character))
+
+#*--- Stations from ride data -------------------
+stations <- readRDS(paste0(folder_rides, "/stations_consolidated_fromRides.RDs")) %>% setDT()
+
+#*--- Ride data -------------------
+rides <- readRDS(paste0(folder_rides, "/rides__2016_2023__processed.RDs")) %>% setDT()
+
+#*--- Ride data as stations-in-time -------------------
+stations_intime <- readRDS(paste0(folder_rides, "/stations_consolidated__2016_2023__1min.RDs")) %>% setDT()
+
+```
+
+## Data
+
+This project uses [city bikes' usage data](https://hri.fi/data/en_GB/dataset/helsingin-ja-espoon-kaupunkipyorilla-ajatut-matkat) and [city bikes' station data](https://hri.fi/data/en_GB/dataset/hsl-n-kaupunkipyoraasemat) collected by HSL and shared on the Helsinki Region Infoshare website. The data for rides is currently available for years 2016-2023.
+
+```{r rides, echo=FALSE}
+rides %>% mutate(Year = year(Departure)) %>% filter(!is.na(Year)) %>% 
+  group_by(Year) %>% summarise(`Number of rides` = n()) %>% t() %>% kable()
+
+```
+
+```{r rides_samestation, echo=FALSE}
+rides_samestation <- rides %>% filter(Departure.station.id==Return.station.id)
+
+```
+
+## Faulty bikes
+
+It is known that many rides may be initiated only to be ended almost instantly due to the rider initiating the ride and only then discovering some technical issue that makes riding the bike to their destination impossible. Because of this, the ride remains short in time and duration and the ride's Departure and Return station end up being the same.
+
+Such rides should be observable in ride data. If we interpret very short rides that start and end at the same location as possibly indicating a broken bike, then this data can be useful in deploying bike maintenance personnel. Even though a single zero-length ride does not necessarily mean a broken ride, repeated zero-length rides or a great proportion of them should indicate an faulty bike and even an insufficient number of bikes (because if only faulty bikes remain at a popular station, they will be repeatedly undocked and repeatedly trigger a zero-length ride).
+
+## Zero-length rides
+
+The task is to identify what such a ride - a "zero-length ride" - looks like in data. `r round(nrow(rides_samestation)/nrow(rides)*100,1)`% of rides have the same Departure and Return station. Next, suitable cutoff points for a zero-length ride's distance and duration need to be established.
+
+
+```{r rides_plot1, echo=FALSE, out.width="70%"}
+ticks_metric <- c(paste0(c(1,12,148), "m"), paste0(c("1.8","22","268","3269"),"km"))
+
+plot(density(log(rides_samestation$Covered.distance), na.rm=T),
+     xlim=c(-0.5, 15.5), xaxt = "n", ylim=c(0, 0.2),
+     xlab="Covered.distance", ylab="Proportion of rides",
+     main="Rides with the same start and end station")
+abline(v=seq(0,15,2.5), col="grey", lty=1) # background lines
+lines(density(log(rides_samestation[rides_samestation$Duration<60, ]$Covered.distance), na.rm=T), col="Red")
+lines(density(log(rides_samestation[rides_samestation$Duration>=60*60, ]$Covered.distance), na.rm=T), col="Blue")
+legend("topright", legend=c("All rides","Rides under 60 sec", "Rides over 1 hour"),  
+       fill = c("black","red","blue"))
+axis(1, at = seq(0,15,2.5), labels = ticks_metric) # ticks in metric
+
+abline(v=log(50), col="black", lty="dashed") # line for 50m, which is our chosen cutoff point
+# axis(1, at = c(seq(0,15,2.5), log(50)), labels = c(ticks_metric, "50m")) # ticks in metric with added 50m
+
+
+```
+
+The above plot uses data from rides with the same start and end station and visualises the distribution of their lengths on a logarithmic scale (variable Covered.distance, in meters). As can be seen, the rides can be grouped in two by distance: rides under ~150 meter and longer rides. Additionally, rides under a minute are very short in distance (as can be expected) and rides over and hour are mostly long in distance. The remaining long-lasting rides could be unsuccesful parkings, where the (faulty) bike was essentially immediately placed back at the starting station. The dashed line is set at 50 meters.
+
+We decided to define a zero-length ride as a ride that has same start and end station and
+
+a) is under 60 seconds long in Duration, or
+b) is under 50 meters long in Covered.distance.
+
+## Zero-length rides in space
+
+Next, observe stations with the greatest proportions of zero-length rides.
+
+```{r space_plot1, echo=FALSE, error=FALSE, warning=FALSE, message=F, out.width="90%"}
+top_nr <- 30
+stations_intime_year <- stations_intime[!is.na(x)] %>%
+  mutate(year = year(Departure)) %>% 
+  group_by(x, y, year) %>%
+  summarise(N_zerolength = sum(Rides_zerolength),
+            N_total = sum(Rides_total)) %>%
+  mutate(prop_zerolength = round(N_zerolength/N_total,3))
+ 
+top_zerolengthrides_yearly <- stations_intime_year %>%
+  filter(N_total >= 100) %>%
+  ungroup() %>% group_by(year) %>% top_n(top_nr, wt=prop_zerolength) %>%
+  left_join(stations_HSL[, c("x","y","Name","Kapasiteet")], by=c("x","y"))
+
+top_zerolengthrides <- top_zerolengthrides_yearly %>% group_by(x, y) %>%
+  summarise(N_zerolength = sum(N_zerolength),
+            N_total = sum(N_total)) %>%
+  mutate(prop_zerolength = round(N_zerolength/N_total,3))
+
+#- - - Map:
+map_top_zerolengthrides <- get_map(location = c(mean(top_zerolengthrides$x), mean(top_zerolengthrides$y)),
+                      maptype="roadmap",
+                      scale = "auto", zoom = 11)
+ggmap(map_top_zerolengthrides) +
+  geom_point(data = top_zerolengthrides, aes(x = x, y = y, fill = prop_zerolength, 
+                                             size = N_zerolength, alpha = 0.96), shape = 21) +
+  guides(fill=guide_colorbar(), alpha=FALSE, size=guide_legend()) +
+  scale_fill_viridis_c(option="viridis") +
+  theme(plot.title = element_text(size=12)) + 
+  ggtitle("Stations with the greatest proportions of zero-length rides")
+```
+
+The above plot shows stations that have been in the top `r top_nr` of stations by proportion of zero-length rides in any year between 2016-2023. (Additionally, all stations have had over 100 total rides in the given year.) The size of the dot represents the total number of zero-length rides across all the years, the color represents the proportion of zero-length rides across all the years.
+
+Clearly, the amount of zero-length rides is greates in the center of Helsinki. However, the higher proportions of zero-length rides seem to be happening in stations located in western areas of Helsinki. The plot below is provided for a better view of the central area.
+
+
+```{r space_plot2, echo=FALSE, error=FALSE, warning=FALSE, message=F, out.width="90%"}
+map_centre <- get_map(location = c(24.94, 60.17), # roughly downtown
+                      maptype="roadmap",
+                      scale = "auto", zoom = 13)
+ggmap(map_centre) +
+  geom_point(data = top_zerolengthrides, aes(x = x, y = y, fill = prop_zerolength, 
+                                             size = N_zerolength, alpha = 0.96), shape = 21) +
+  guides(fill=guide_colorbar(), alpha=FALSE, size=guide_legend()) +
+  scale_fill_viridis_c(option="viridis") +
+  theme(plot.title = element_text(size=12)) + 
+  ggtitle("Stations with the greatest proportions of zero-length rides in central Helsinki")
+```
+
+
+## Zero-length rides in time
+
+As is apparent from the table in the section *Data*, the number of rides has varied across years, starting with a comparatively small number of rides in 2016 and peaking in 2019. However, how are zero-length rides distributed across time?
+
+```{r time_plot1, echo=FALSE, out.width="70%"}
+colours=rev(viridis(8)) # generates 8 colours at equal distance
+
+plot(density(log(rides_samestation[year(Departure)==2016,]$Covered.distance), na.rm=T), 
+     lwd=2, col=colours[1],
+     xlim=c(-0.5, 15.5), xaxt = "n", ylim=c(0, 0.2),
+     xlab="Covered.distance", ylab="Proportion of rides",
+     main="Rides with the same start and end station in 2016-2023")
+abline(v=seq(0,15,2.5), col="grey", lty=1) # background lines
+for (i in 1:length(2017:2023)) {
+  data <- rides_samestation %>% filter(year(Departure) %in% c(2016:2023)[i+1])
+  lines(density(log(data$Covered.distance), na.rm=T), col=colours[i+1], lwd=2)
+}
+legend("topright", legend=c(2016:2023), fill = colours)
+abline(v=log(50), col="black", lty="dashed") # line for 50m, which is our chosen cutoff point
+axis(1, at = seq(0,15,2.5), labels = ticks_metric) # ticks in metric
+
+#axis(1, at = c(seq(0,15,2.5), log(50)), labels = c(ticks_metric, "50m"), lwd=1) # ticks in metric
+```
+
+As the above plot shows, the two "bumps" of short rides and longer rides have existed across the years. However, the bumps were fairly similarly sized in 2017 - and the amount of short rides has consistently been coming down every since. This hints that the proportion of zero-length rides should also be decreasing from 2017 to 2023.
+
+
+## Consistently problematic stations
+
+Some stations come up consistently as having a large proportion on zero-length rides. Below is a table of stations appearing as having this problem in at least 3 years and a corresponding plot of central Helsinki.
+
+```{r top_plot1, echo=FALSE, error=FALSE, warning=FALSE, message=F, out.width="70%"}
+#*------ Top stations across all years (in top 30 by proportion on 3+ years) ----
+top_alltime <- top_zerolengthrides_yearly %>% group_by(x, y) %>%
+  summarise(N_years = n(), N_zerolength = sum(N_zerolength)) %>% 
+  filter(N_years >= 3) %>%
+  left_join(stations_HSL[, c("x","y","Name","Kapasiteet")], by=c("x","y"))
+top_alltime_yearly <- stations_intime_year %>% 
+  filter(x %in% top_alltime$x & y %in% top_alltime$y) %>% 
+  select(-N_zerolength, -N_total) %>%
+    dcast(x+y ~ year, value.var = "prop_zerolength") %>%
+  left_join(top_alltime, by=c("x","y"))
+
+top_alltime_yearly <- top_alltime_yearly[, c("Name","x","y","N_years",2016:2023)] %>%
+  arrange(-N_years)
+
+#- - - Map
+# map_top <- get_map(location = c(lon = mean(top_alltime$x), lat = mean(top_alltime$y)),
+#                       maptype="roadmap",
+#                       scale = "auto", zoom = 11)
+# ggmap(map_top) +
+#   geom_point(data = top_alltime, aes(x = x, y = y, fill = N_years, size = N_zerolength, alpha = 0.96), shape = 21) +
+#   guides(fill=guide_colorbar(), alpha=FALSE, size=guide_legend()) +
+#   scale_fill_viridis_c(option="viridis") +
+#   theme(plot.title = element_text(size=12)) + 
+#   ggtitle("Stations with the greatest proportions of zero-length rides in at least 3 years")
+
+kable(top_alltime_yearly)
+```
+
+
+```{r time_plot2, echo=FALSE, error=FALSE, warning=FALSE, message=F, out.width="90%"}
+#- - - For centre of Helsinki:
+ggmap(map_centre) +
+  geom_point(data = top_alltime, aes(x = x, y = y, fill = N_years, size = N_zerolength), shape = 21) +
+  guides(fill=guide_colorbar(), alpha=FALSE, size=guide_legend()) +
+  scale_fill_viridis_c(option="viridis") +
+  theme(plot.title = element_text(size=12)) + 
+  ggtitle("Stations with the greatest proportions of zero-length rides in central Helsinki")
+```
+
+The size of dots again represents the number of zero-length rides initiated from the station, but the color represents the number of years that the station has been in the top `r top_nr` of stations by proportion of zero-length rides.

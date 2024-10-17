@@ -167,14 +167,22 @@ stations %>% select(Departure.station.id) %>% unique() %>% nrow() # 622
 stations %>% select(Departure.station.id, x, y) %>% unique() %>% nrow() 
   # 622, same number as unique IDs, good
 
-tmp <- stations %>% group_by(Departure.station.id) %>% 
+# However, some stations changed ID over time as well.
+stations %>% select(x, y) %>% unique() %>% nrow() # 458
+# By coordinates, we only have 458 unique stations. I will make a separate table for those:
+stations_consolidated <- stations %>% select(x, y, Rides_total) %>%
+  group_by(x, y) %>% summarise(Rides_total = sum(Rides_total))
+
+stations <- stations %>% group_by(Departure.station.id, x, y) %>%
   summarise(Rides_total = sum(Rides_total))
-stations <- stations %>% select(-Departure.station.name, -Rides_total) %>% left_join(tmp) %>% unique()
 
 
 #*------ Saving the station data from rides --------------------
 write.csv(stations, paste0(folder, "/results/stations_fromRides.csv"))
 saveRDS(stations, paste0(folder_bigdata, "/stations_fromRides.RDs"))
+
+saveRDS(stations_consolidated, paste0(folder_bigdata, "/stations_consolidated_fromRides.RDs"))
+
 #stations <- readRDS(paste0(folder_bigdata, "/stations_fromRides.RDs"))
 
 
@@ -221,4 +229,11 @@ for (i in c(2016:2023)) {
                                       "/stations__2016_2023__1min/stations_", i, "_1min.csv"))
 }
 
+#*--- Doing station consolidation on stations_intime --------------------
+stations_intime_consolidated <- stations_intime %>%
+  group_by(Departure, x, y) %>%
+  summarise(Rides_total = sum(Rides_total),
+            Rides_zerolength = sum(Rides_zerolength)) %>%
+  mutate(Rides_zerolength_prop = Rides_zerolength/Rides_total)
+saveRDS(stations_intime_consolidated, paste0(folder_bigdata, "/stations_consolidated__2016_2023__1min.RDs"))
 
