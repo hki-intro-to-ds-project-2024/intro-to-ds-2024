@@ -36,6 +36,7 @@ class Analytics:
 
     def _rides_to_timescale(self):
         ride_list = []
+        #
         files = [f for f in (DATA_DIR / "results/").glob('**/*.csv') if f.is_file()]
         self._logger.info("Parallel processing rides...")
 
@@ -68,7 +69,7 @@ class Analytics:
 
     def _load_models(self):
         models = {}
-        with open("serialized_models.json", "r") as model_file:
+        with open(DATA_DIR/"serialized_models.json", "r") as model_file:
             for item in model_file:
                 item.rstrip("\n")
                 data = item.split(";")
