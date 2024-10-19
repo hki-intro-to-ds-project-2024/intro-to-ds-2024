@@ -1,10 +1,11 @@
 
-from src.config import DATA_DIR, INITIALIZE_DATABASE, RIDE_BATCH_SIZE
-from src.timescale import TimescaleClient
+from src.config import DATA_DIR, INITIALIZE_DATABASE, FILTERING_FRACTION, MODEL_TO_USE, Model
+from src.db.timescale import TimescaleClient
+from src.ml.prophet_wrapper import ProphetWrapper
+from src.ml.arima_wrapper import ArimaWrapper
+
 from random import randrange
 from time import sleep
-from prophet import Prophet
-from prophet.serialize import model_from_json
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import pandas as pd
 import logging
@@ -13,14 +14,24 @@ class Analytics:
     def __init__(self, logger):
         self._logger = logger
         self._timescale_connection = TimescaleClient(logger)
-        self.__models = self._load_models()
         self._logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
-            self._timescale_connection.apply_schema("zero_rides.sql")
+            self._timescale_connection.apply_schema("/home/miika/big-partition/courses/intro-to-ds-2024/backend/src/migrations/zero_rides.sql")
             self._stops_to_timescale()
             self._logger.info("stops in timescale")
             self._rides_to_timescale()
             self._logger.info("rides in timescale")
+        self._logger.info("Initializing Prophet")
+        self._logger.info(f"Using model {MODEL_TO_USE}")
+        if MODEL_TO_USE == Model.PROPHET:
+            self._model = ProphetWrapper(logger.getChild("prophet"),
+                                            self._timescale_connection)
+        if MODEL_TO_USE == Model.ARIMA:
+            self._model = Arimawrapper(logger.getChild("prophet"),
+                                            self._timescale_connection)
+
+    def predict(self, start_date, end_date):
+        return self._model.predict(start_date, end_date)
 
     def _stops_to_timescale(self):
         data_stops = pd.read_csv(DATA_DIR / "stops/Helsingin_ja_Espoon_kaupunkipyöräasemat_avoin.csv")
@@ -36,8 +47,7 @@ class Analytics:
 
     def _rides_to_timescale(self):
         ride_list = []
-        #
-        files = [f for f in (DATA_DIR / "results/").glob('**/*.csv') if f.is_file()]
+        files = [f for f in (DATA_DIR / "results/stations__2016_2023__1min/").glob('**/*.csv') if f.is_file()]
         self._logger.info("Parallel processing rides...")
 
         with ProcessPoolExecutor() as executor:
@@ -69,7 +79,7 @@ class Analytics:
 
     def _load_models(self):
         models = {}
-        with open(DATA_DIR/"serialized_models.json", "r") as model_file:
+        with open("serialized_models.json", "r") as model_file:
             for item in model_file:
                 item.rstrip("\n")
                 data = item.split(";")
@@ -81,20 +91,7 @@ class Analytics:
         return models
     
     def predict(self, start_date, end_date):
-        predictions = {}
-        # Convert the start and end strings to datetime format
-        start_datetime = pd.to_datetime(start_date, format='%Y.%m.%d %H:%M:%S')
-        end_datetime = pd.to_datetime(end_date, format='%Y.%m.%d %H:%M:%S')
-
-        # Generate a date range with a frequency of 1 minute
-        date_range = pd.date_range(start=start_datetime, end=end_datetime, freq='min')
-
-        for station_id, model in self.__models.items():
-            future = pd.DataFrame(date_range, columns=['ds'])
-            predictions[station_id] = model.predict(future, include_history=False)[["ds", "yhat"]]
-
-        return predictions
-
+        return self._model.predict(start_date, end_date)
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
         node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
@@ -111,8 +108,9 @@ class Analytics:
 
 def process_rides(file_name):
     logger = logging.getLogger()
-    print(f"adding rides from {file_name}")
+    print(f"adding rides from {file_name}, filtering", FILTERING_FRACTION*100, "%")
     data_rides = pd.read_csv(DATA_DIR / "results/" / file_name)
+    data_rides = data_rides.sample(frac=FILTERING_FRACTION, replace=False, random_state=1)
     data_rides = data_rides[~data_rides.isna().any(axis=1)]
 
     rides = list(zip(

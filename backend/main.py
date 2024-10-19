@@ -1,7 +1,7 @@
 from flask import Flask, send_file, send_from_directory, jsonify, request
 from flask_cors import CORS
 from src.config import FRONTEND_DIR, DEVELOPMENT_ENV
-from src.analytics import Analytics
+from src.analytics.analytics import Analytics
 import logging
 
 app = Flask("bicycle-map-app")

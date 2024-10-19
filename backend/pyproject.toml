@@ -16,6 +16,8 @@ psycopg = "^3.2.3"
 psycopg2 = "^2.9.9"
 prophet = "^1.1.6"
 logging = "^0.4.9.6"
+joblib = "^1.4.2"
+sqlalchemy = "^2.0.36"
 
 [build-system]
 requires = ["poetry-core"]
