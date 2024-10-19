@@ -22,26 +22,7 @@ class ProphetWrapper(AbstractWrapper):
         self._logger.info("Prediction:" + str(self.predict('2023-01-01', '2023-01-02')))
 
     def _train_model(self):
-        engine = create_engine('postgresql://postgres:password@localhost/postgres')
-
-        self._logger.info("Running Query")
-
-        query = """
-        SELECT
-            date_trunc('hour', rides.time) AS interval_start,
-            stops.stop_name,
-            COUNT(*) AS ride_count,
-            SUM(rides.zero_rides) AS zero_rides
-        FROM 
-            rides 
-        INNER JOIN
-            stops ON rides.lat = stops.lat AND rides.lng = stops.lng
-        WHERE rides.time BETWEEN '2016-06-01' AND '2025-01-01'
-        GROUP BY interval_start, stops.stop_name
-        ORDER BY interval_start, stops.stop_name;
-        """
-
-        df = pd.read_sql(query, engine)
+        df = self._timescale_connection.get_zero_rides()
         
         self._logger.info(f"Query complete: {df.head()}")
 
@@ -76,9 +57,7 @@ class ProphetWrapper(AbstractWrapper):
         return self._model
 
     def predict(self, start_date, end_date):
-        engine = create_engine('postgresql://postgres:password@localhost/postgres')
-        query = "SELECT DISTINCT stop_name FROM stops"
-        df = pd.read_sql(query, engine)
+        df = self._timescale_connection.get_stop_names()
 
         station_names = df['stop_name'].unique()
 

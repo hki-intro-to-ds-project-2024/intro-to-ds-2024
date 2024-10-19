@@ -3,7 +3,6 @@ from src.ml.abstract_wrapper import AbstractWrapper
 
 from prophet import Prophet
 from prophet.serialize import model_from_json
-from sqlalchemy import create_engine
 
 import pandas as pd
 import numpy as np
