@@ -12,28 +12,28 @@ import logging
 
 class Analytics:
     def __init__(self, logger):
-        self._logger = logger
-        self._timescale_connection = TimescaleClient(logger)
-        self._logger.info("Timescale connection initialized")
+        self.__logger = logger
+        self.__timescale_connection = TimescaleClient(logger)
+        self.__logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
-            self._timescale_connection.apply_schema("/home/miika/big-partition/courses/intro-to-ds-2024/backend/src/migrations/zero_rides.sql")
-            self._stops_to_timescale()
-            self._logger.info("stops in timescale")
-            self._rides_to_timescale()
-            self._logger.info("rides in timescale")
-        self._logger.info("Initializing Prophet")
-        self._logger.info(f"Using model {MODEL_TO_USE}")
+            self.__timescale_connection.apply_schema("/home/miika/big-partition/courses/intro-to-ds-2024/backend/src/migrations/zero_rides.sql")
+            self.__stops_to_timescale()
+            self.__logger.info("stops in timescale")
+            self.__rides_to_timescale()
+            self.__logger.info("rides in timescale")
+        self.__logger.info(f"Using model {MODEL_TO_USE.name}")
         if MODEL_TO_USE == Model.PROPHET:
-            self._model = ProphetWrapper(logger.getChild("prophet"),
-                                            self._timescale_connection)
+            self.__model = ProphetWrapper(logger.getChild(MODEL_TO_USE.name),
+                                            self.__timescale_connection)
         if MODEL_TO_USE == Model.ARIMA:
-            self._model = Arimawrapper(logger.getChild("prophet"),
-                                            self._timescale_connection)
+            self.__model = ArimaWrapper(logger.getChild(MODEL_TO_USE.name),
+                                            self.__timescale_connection)
+        self.__logger.info("Prediction:" + str(self.__model.predict('2023-01-01', '2023-01-02')))
 
     def predict(self, start_date, end_date):
-        return self._model.predict(start_date, end_date)
+        return self.__model.predict(start_date, end_date)
 
-    def _stops_to_timescale(self):
+    def __stops_to_timescale(self):
         data_stops = pd.read_csv(DATA_DIR / "stops/Helsingin_ja_Espoon_kaupunkipyöräasemat_avoin.csv")
         data_stops = data_stops[~data_stops.isna().any(axis=1)]
         stops = list(zip(
@@ -41,43 +41,43 @@ class Analytics:
             data_stops['y'],
             data_stops['x']))
         try:
-            self._timescale_connection.add_stops(stops)
+            self.__timescale_connection.add_stops(stops)
         except Exception as e:
-            self._logger.error(f"Error processing stops: {e}")
+            self.__logger.error(f"Error processing stops: {e}")
 
-    def _rides_to_timescale(self):
+    def __rides_to_timescale(self):
         ride_list = []
         files = [f for f in (DATA_DIR / "results/stations__2016_2023__1min/").glob('**/*.csv') if f.is_file()]
-        self._logger.info("Parallel processing rides...")
+        self.__logger.info("Parallel processing rides...")
 
         with ProcessPoolExecutor() as executor:
             results = list(executor.map(process_rides, [str(file) for file in files]))
             for rides in results:
                 ride_list.append(rides)
             executor.shutdown()    
-        self._logger.info("Rides processed")
+        self.__logger.info("Rides processed")
 
-        self._logger.info("Inserting rides to timescale in parallel...")
+        self.__logger.info("Inserting rides to timescale in parallel...")
 
         with ThreadPoolExecutor() as executor:
             futures = []
             for ride_index, rides in enumerate(ride_list):
-                futures.append(executor.submit(self._insert_rides_batch, rides, ride_index, len(ride_list), len(ride_list)))
+                futures.append(executor.submit(self.__insert_rides_batch, rides, ride_index, len(ride_list), len(ride_list)))
             for future in futures:
                 future.result()
 
-        self._logger.info("Finished inserting rides to timescale")
+        self.__logger.info("Finished inserting rides to timescale")
 
-    def _insert_rides_batch(self, rides, ride_index, total_rides, total_batches):
+    def __insert_rides_batch(self, rides, ride_index, total_rides, total_batches):
         """Helper function to insert a batch of rides"""
         try:
-            self._logger.info(f"Inserting batch {ride_index + 1}/{total_batches} with {len(rides)} rides")
-            self._timescale_connection.add_rides(rides)
+            self.__logger.info(f"Inserting batch {ride_index + 1}/{total_batches} with {len(rides)} rides")
+            self.__timescale_connection.add_rides(rides)
         except Exception as e:
-            self._logger.info(f"Error inserting batch {ride_index + 1}/{total_batches}: {e}")
-        self._logger.info(f"completed batch {ride_index + 1}/{total_batches}")
+            self.__logger.info(f"Error inserting batch {ride_index + 1}/{total_batches}: {e}")
+        self.__logger.info(f"completed batch {ride_index + 1}/{total_batches}")
 
-    def _load_models(self):
+    def __load_models(self):
         models = {}
         with open("serialized_models.json", "r") as model_file:
             for item in model_file:
@@ -91,10 +91,10 @@ class Analytics:
         return models
     
     def predict(self, start_date, end_date):
-        return self._model.predict(start_date, end_date)
+        return self.__model.predict(start_date, end_date)
 
     def get_nodes_json(self, time_start, time_end, zero_rides, proportion):
-        node_list = self._timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
+        node_list = self.__timescale_connection.get_nodes(time_start, time_end, zero_rides, proportion)
         nodes = []
         for i, node in enumerate(node_list):
             nodes.append({

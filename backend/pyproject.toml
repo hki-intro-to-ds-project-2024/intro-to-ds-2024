@@ -18,6 +18,7 @@ prophet = "^1.1.6"
 logging = "^0.4.9.6"
 joblib = "^1.4.2"
 sqlalchemy = "^2.0.36"
+statsmodels = "^0.14.4"
 
 [build-system]
 requires = ["poetry-core"]

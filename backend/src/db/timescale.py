@@ -10,28 +10,28 @@ import pandas as pd
 class TimescaleClient:
 
     def __init__(self, logger):
-        self.conn = psycopg2.connect(TIMESCALE_CONN_STRING)
-        self.cur = self.conn.cursor()
-        self._logger = logger
+        self.__conn = psycopg2.connect(TIMESCALE_CONN_STRING)
+        self.__cur = self.__conn.cursor()
+        self.__logger = logger
 
     def add_stops(self, stops) -> None:
-        self.conn.commit()
-        self.cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        self.__conn.commit()
+        self.__cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
         try:
             cmd = "INSERT INTO stops (stop_name, lat, lng) VALUES (%s, %s, %s)"
-            self.cur.executemany(cmd, stops)
-            self.conn.commit()
+            self.__cur.executemany(cmd, stops)
+            self.__conn.commit()
         except psycopg2.Error as e:
-            self.cur.execute("ROLLBACK")
+            self.__cur.execute("ROLLBACK")
             print(e)
             raise
 
     def add_rides(self, nodes) -> None:
-        self.conn.commit()
+        self.__conn.commit()
         try:
             cmd = "INSERT INTO rides (time, lat, lng, zero_rides, zero_proportion) VALUES (%s, %s, %s, %s, %s)"
-            self.cur.executemany(cmd, nodes)
-            self.conn.commit()
+            self.__cur.executemany(cmd, nodes)
+            self.__conn.commit()
         except psycopg2.Error as e:
             print(e)
             raise
@@ -44,16 +44,16 @@ class TimescaleClient:
         with open(full_path, 'r') as file:
             schema_sql = file.read()
 
-        self.cur.execute(schema_sql)
-        self.conn.commit()
+        self.__cur.execute(schema_sql)
+        self.__conn.commit()
 
     def get_nodes(self, time_start, time_end, zero_rides, proportion) -> list:
         cmd = f"""SELECT DISTINCT lat, lng FROM rides WHERE zero_rides >= {zero_rides} 
             AND total_rides > 0 AND zero_proportion >= {proportion}
             AND time >= '{time_start}' AND time < '{time_end}';"""
         try:
-            self.cur.execute(cmd)
-            nodes = [(lat, lng) for (lat, lng,) in self.cur.fetchall()]
+            self.__cur.execute(cmd)
+            nodes = [(lat, lng) for (lat, lng,) in self.__cur.fetchall()]
             print(cmd)
             return nodes
         except:
@@ -61,7 +61,7 @@ class TimescaleClient:
             return []
 
     def get_zero_rides(self):
-        self._logger.info("Running Query")
+        self.__logger.info("Running Query")
         
         query = """
         SELECT
@@ -79,22 +79,22 @@ class TimescaleClient:
         """
         
         try:
-            self.cur.execute(query)
-            results = self.cur.fetchall()
-            columns = [desc[0] for desc in self.cur.description]
+            self.__cur.execute(query)
+            results = self.__cur.fetchall()
+            columns = [desc[0] for desc in self.__cur.description]
             return pd.DataFrame(results, columns=columns)
         except psycopg2.Error as e:
-            self._logger.error(f"Error fetching zero rides: {e}")
+            self.__logger.error(f"Error fetching zero rides: {e}")
             return pd.DataFrame() 
 
     def get_stop_names(self):
         query = "SELECT DISTINCT stop_name FROM stops"
         
         try:
-            self.cur.execute(query)
-            results = self.cur.fetchall()
+            self.__cur.execute(query)
+            results = self.__cur.fetchall()
             return pd.DataFrame(results, columns=["stop_name"]) 
         except psycopg2.Error as e:
-            self._logger.error(f"Error fetching stop names: {e}")
+            self.__logger.error(f"Error fetching stop names: {e}")
             return pd.DataFrame() 
 
