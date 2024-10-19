@@ -1,4 +1,4 @@
-from src.config import TRAIN_MODEL, MODELS_DIR
+from src.config import MODELS_DIR
 from src.ml.abstract_wrapper import AbstractWrapper
 
 from prophet import Prophet
@@ -10,52 +10,45 @@ import joblib
 
 class ProphetWrapper(AbstractWrapper):
     def __init__(self, logger, timescale_connection):
-        self.__logger = logger
-        self.__timescale_connection = timescale_connection
-        self.freq_encoding = None
-        if TRAIN_MODEL:
-            self.__train_model()
-            self.__logger.info("Model is trained")
-        self.__model = self.__load_model()
-        self.__logger.info("Prophet initialized")
+        super().__init__(logger, timescale_connection)
 
-    def __train_model(self):
-        df = self.__timescale_connection.get_zero_rides()
+    def _train_model(self):
+        df = self._timescale_connection.get_zero_rides()
         
-        self.__logger.info(f"Query complete: {df.head()}")
+        self._logger.info(f"Query complete: {df.head()}")
 
         df.rename(columns={'interval_start': 'ds', 'zero_rides': 'y'}, inplace=True)
         df['ds'] = df['ds'].dt.tz_localize(None)
 
-        self.freq_encoding = df['stop_name'].value_counts() / len(df)
-        df['stop_name_freq'] = df['stop_name'].map(self.freq_encoding)
+        self._freq_encoding = df['stop_name'].value_counts() / len(df)
+        df['stop_name_freq'] = df['stop_name'].map(self._freq_encoding)
 
-        self.__logger.info(df.head(20))
-        self.__logger.info("Frequency encoding complete")
-        self.__logger.info("Adding regressors")
+        self._logger.info(df.head(20))
+        self._logger.info("Frequency encoding complete")
+        self._logger.info("Adding regressors")
 
         model = Prophet()
         model.add_regressor('stop_name_freq')
 
-        self.__logger.info("Regressors complete")
-        self.__logger.info("Fitting Model")
+        self._logger.info("Regressors complete")
+        self._logger.info("Fitting Model")
 
         model.fit(df[['ds', 'y', 'stop_name_freq']])
 
-        self.__logger.info("Fitting complete")
-        self.__logger.info("Saving Model")
+        self._logger.info("Fitting complete")
+        self._logger.info("Saving Model")
 
-        joblib.dump((model, self.freq_encoding), MODELS_DIR / "prophet_model.pkl")
-        self.__logger.info("Model saved")
+        joblib.dump((model, self._freq_encoding), MODELS_DIR / "prophet_model.pkl")
+        self._logger.info("Model saved")
 
-    def __load_model(self):
-        self.__logger.info("Loading Model")
-        self.__model, self.freq_encoding = joblib.load(MODELS_DIR / "prophet_model.pkl")
-        self.__logger.info("Model loaded")
-        return self.__model
+    def _load_model(self):
+        self._logger.info(f"Loading Model {MODELS_DIR / "prophet_model.pkl"}")
+        self._model, self._freq_encoding = joblib.load(MODELS_DIR / "prophet_model.pkl")
+        self._logger.info("Model loaded")
+        return model
 
     def predict(self, start_date, end_date):
-        df = self.__timescale_connection.get_stop_names()
+        df = self._timescale_connection.get_stop_names()
 
         station_names = df['stop_name'].unique()
 
@@ -69,14 +62,14 @@ class ProphetWrapper(AbstractWrapper):
             'stop_name': station_names.tolist() * len(date_range)
         })
 
-        future['stop_name_freq'] = future['stop_name'].map(self.freq_encoding)
-        future['stop_name_freq'].fillna(self.freq_encoding.min(), inplace=True)
+        future['stop_name_freq'] = future['stop_name'].map(self._freq_encoding)
+        future['stop_name_freq'].fillna(self._freq_encoding.min(), inplace=True)
 
         future['ds'] = future['ds'].dt.tz_localize(None)
 
-        self.__logger.info("Predicting!")
-        forecast = self.__model.predict(future[['ds', 'stop_name_freq']])
-        self.__logger.info("Done!")
+        self._logger.info("Predicting!")
+        forecast = self._model.predict(future[['ds', 'stop_name_freq']])
+        self._logger.info("Done!")
         forecast['stop_name'] = future['stop_name']
 
         predictions = {}

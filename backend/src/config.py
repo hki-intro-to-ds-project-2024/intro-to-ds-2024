@@ -14,7 +14,7 @@ DEVELOPMENT_ENV = True
 
 TIMESCALE_CONN_STRING = "postgres://postgres:password@localhost/postgres"
 INITIALIZE_DATABASE = False
-TRAIN_MODEL = False
+TRAIN_MODEL = True
 
 FILTERING_FRACTION = 0.1
 

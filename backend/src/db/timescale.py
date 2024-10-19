@@ -38,7 +38,6 @@ class TimescaleClient:
 
 
     def apply_schema(self, schema_file: str) -> None:
-        
         full_path = os.path.join(MIGRATIONS_DIR, schema_file)
 
         with open(full_path, 'r') as file:
