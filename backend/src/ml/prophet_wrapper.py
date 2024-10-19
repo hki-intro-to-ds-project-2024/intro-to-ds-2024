@@ -42,10 +42,7 @@ class ProphetWrapper(AbstractWrapper):
         self._logger.info("Model saved")
 
     def _load_model(self):
-        self._logger.info(f"Loading Model {MODELS_DIR / "prophet_model.pkl"}")
-        self._model, self._freq_encoding = joblib.load(MODELS_DIR / "prophet_model.pkl")
-        self._logger.info("Model loaded")
-        return model
+        super()._load_model()
 
     def predict(self, start_date, end_date):
         df = self._timescale_connection.get_stop_names()

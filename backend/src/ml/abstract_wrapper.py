@@ -14,7 +14,7 @@ class AbstractWrapper(ABC):
         if TRAIN_MODEL:
             self._train_model()
             self._logger.info("Model is trained")
-        self._model = self._load_model
+        self._load_model()
 
     @abstractmethod
     def _train_model(self):
@@ -22,7 +22,9 @@ class AbstractWrapper(ABC):
 
     @abstractmethod
     def _load_model(self):
-        pass
+        self._logger.info(f"Loading Model {MODELS_DIR / "arima_model.pkl"}")
+        self._model, self._freq_encoding = joblib.load(MODELS_DIR / "arima_model.pkl")
+        self._logger.info("Model loaded")
 
     @abstractmethod
     def predict(self, start_date, end_date):
