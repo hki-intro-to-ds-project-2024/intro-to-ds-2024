@@ -1,4 +1,3 @@
-from src.config import MODELS_DIR
 from src.ml.abstract_wrapper import AbstractWrapper
 
 from prophet import Prophet
@@ -6,7 +5,6 @@ from prophet.serialize import model_from_json
 
 import pandas as pd
 import numpy as np
-import joblib
 
 class ProphetWrapper(AbstractWrapper):
     def __init__(self, logger, timescale_connection):
@@ -38,11 +36,13 @@ class ProphetWrapper(AbstractWrapper):
         self._logger.info("Fitting complete")
         self._logger.info("Saving Model")
 
-        joblib.dump((model, self._freq_encoding), MODELS_DIR / "prophet_model.pkl")
-        self._logger.info("Model saved")
+        self._save_model(model, self._freq_encoding)
 
     def _load_model(self):
         super()._load_model()
+
+    def _save_model(self, model, freq):
+        super()._save_model(model, freq)
 
     def predict(self, start_date, end_date):
         df = self._timescale_connection.get_stop_names()

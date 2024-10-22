@@ -1,9 +1,10 @@
 from src.db.timescale import TimescaleClient
-from src.config import TRAIN_MODEL
+from src.config import TRAIN_MODEL, MODEL_TO_USE, MODELS_DIR
 
 from abc import ABC, abstractmethod
 
 import logging
+import joblib
 
 class AbstractWrapper(ABC):
 
@@ -22,9 +23,15 @@ class AbstractWrapper(ABC):
 
     @abstractmethod
     def _load_model(self):
-        self._logger.info(f"Loading Model {MODELS_DIR / "arima_model.pkl"}")
-        self._model, self._freq_encoding = joblib.load(MODELS_DIR / "arima_model.pkl")
+        self._logger.info(f"Loading Model {MODELS_DIR / f"{(MODEL_TO_USE.name).lower()}_model.pkl"}")
+        self._model, self._freq_encoding = joblib.load(MODELS_DIR / f"{(MODEL_TO_USE.name).lower()}_model.pkl")
         self._logger.info("Model loaded")
+
+    @abstractmethod
+    def _save_model(self, model, encoding):
+        self._logger.info("Saving Model")
+        joblib.dump((model, encoding), MODELS_DIR / f"{(MODEL_TO_USE.name).lower()}_model.pkl")
+        self._logger.info("Model saved")
 
     @abstractmethod
     def predict(self, start_date, end_date):

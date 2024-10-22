@@ -36,11 +36,8 @@ class TimescaleClient:
             print(e)
             raise
 
-
     def apply_schema(self, schema_file: str) -> None:
-        full_path = os.path.join(MIGRATIONS_DIR, schema_file)
-
-        with open(full_path, 'r') as file:
+        with open(MIGRATIONS_DIR / schema_file, 'r') as file:
             schema_sql = file.read()
 
         self.__cur.execute(schema_sql)
@@ -48,7 +45,7 @@ class TimescaleClient:
 
     def get_nodes(self, time_start, time_end, zero_rides, proportion) -> list:
         cmd = f"""SELECT DISTINCT lat, lng FROM rides WHERE zero_rides >= {zero_rides} 
-            AND total_rides > 0 AND zero_proportion >= {proportion}
+             AND zero_proportion >= {proportion}
             AND time >= '{time_start}' AND time < '{time_end}';"""
         try:
             self.__cur.execute(cmd)
@@ -64,7 +61,7 @@ class TimescaleClient:
         
         query = """
         SELECT
-            date_trunc('hour', rides.time) AS interval_start,
+            date_trunc('day', rides.time) AS interval_start,
             stops.stop_name,
             COUNT(*) AS ride_count,
             SUM(rides.zero_rides) AS zero_rides
@@ -72,7 +69,7 @@ class TimescaleClient:
             rides 
         INNER JOIN
             stops ON rides.lat = stops.lat AND rides.lng = stops.lng
-        WHERE rides.time BETWEEN '2016-06-01' AND '2025-01-01'
+        WHERE rides.time BETWEEN '2016-01-01' AND '2025-01-01'
         GROUP BY interval_start, stops.stop_name
         ORDER BY interval_start, stops.stop_name;
         """
@@ -96,4 +93,15 @@ class TimescaleClient:
         except psycopg2.Error as e:
             self.__logger.error(f"Error fetching stop names: {e}")
             return pd.DataFrame() 
+    
+    def get_coord_dict(self):
+        query = "SELECT stop_name, lat, lng FROM stops"
+        
+        try:
+            self.__cur.execute(query)
+            results = self.__cur.fetchall()
+            return {stop_name: (lat, lng) for stop_name, lat, lng in results} 
+        except psycopg2.Error as e:
+            self.__logger.error(f"Error fetching stop names: {e}")
+            return dict()
 

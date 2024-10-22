@@ -16,7 +16,7 @@ class Analytics:
         self.__timescale_connection = TimescaleClient(logger)
         self.__logger.info("Timescale connection initialized")
         if INITIALIZE_DATABASE:
-            self.__timescale_connection.apply_schema("/home/miika/big-partition/courses/intro-to-ds-2024/backend/src/migrations/zero_rides.sql")
+            self.__timescale_connection.apply_schema("zero_rides.sql")
             self.__stops_to_timescale()
             self.__logger.info("stops in timescale")
             self.__rides_to_timescale()
@@ -28,7 +28,7 @@ class Analytics:
         if MODEL_TO_USE == Model.ARIMA:
             self.__model = ArimaWrapper(logger.getChild(MODEL_TO_USE.name),
                                             self.__timescale_connection)
-        self.__logger.info("Prediction:" + str(self.__model.predict('2023-01-01', '2023-01-02')))
+        self.__logger.info("Prediction:" + str(self.__model.predict('2021-01-02', '2021-01-03')))
 
     def predict(self, start_date, end_date):
         return self.__model.predict(start_date, end_date)
@@ -101,16 +101,33 @@ class Analytics:
                 'position': {'lat': node[0], 'lng': node[1]},
                 'id': i,
                 'type': 'pin',
-                'zIndex': i
+                'zIndex': 100
             })
         return nodes
 
+    def get_predictions_json(self, time_start, time_end, zero_rides):
+        coord_dict = self.__timescale_connection.get_coord_dict()
+        node_dict = self.predict(time_start, time_end)
+        predictions = []
+        for i, node in enumerate(node_dict):
+            lat, lng = coord_dict[node]
+            zero_rides_pred = 0
+            for date in node_dict[node]:
+                zero_rides_pred += int(node_dict[node][date])
+            if zero_rides_pred > int(zero_rides):
+                predictions.append({
+                    'position': {'lat': lat, 'lng': lng},
+                    'rides': int(zero_rides_pred),
+                    'id': i + 500,
+                    'type': 'html',
+                    'zIndex': 99
+                })
+        return predictions
 
 def process_rides(file_name):
     logger = logging.getLogger()
     print(f"adding rides from {file_name}, filtering", FILTERING_FRACTION*100, "%")
-    data_rides = pd.read_csv(DATA_DIR / "results/" / file_name)
-    data_rides = data_rides.sample(frac=FILTERING_FRACTION, replace=False, random_state=1)
+    data_rides = pd.read_csv(DATA_DIR / "results/" / file_name).sample(frac=FILTERING_FRACTION)
     data_rides = data_rides[~data_rides.isna().any(axis=1)]
 
     rides = list(zip(

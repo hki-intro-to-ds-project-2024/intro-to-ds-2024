@@ -26,7 +26,7 @@ def file_paths(path):
 @app.route("/nodes")
 def all_nodes():
     """
-    Example request: /nodes?time_start=2022-01-01T00:00:00&time_end=2022-01-02T00:00:00&zero_rides=false&proportion=0.5
+    Example request: /nodes?time_start=2022-01-01T00:00:00&time_end=2022-01-02T00:00:00&zero_rides=1&proportion=0.5
     """
     time_start = request.args.get('time_start')
     time_end = request.args.get('time_end')
@@ -35,6 +35,19 @@ def all_nodes():
     nodes_json = analytics.get_nodes_json(time_start, time_end, zero_rides, proportion)
     logger.info(nodes_json)
     return jsonify(nodes_json)
+
+@app.route("/predictions")
+def predictions():
+    """
+    Example request: /predictions?time_start=2022-01-01T00:00:00&time_end=2022-01-02T00:00:00&zero_rides=1
+    """
+    time_start = request.args.get('time_start')
+    time_end = request.args.get('time_end')
+    zero_rides = request.args.get('zero_rides')
+    proportion = request.args.get('proportion')
+    predictions_json = analytics.get_predictions_json(time_start, time_end, zero_rides)
+    logger.info(predictions_json)
+    return jsonify(predictions_json)
 
 if __name__ == "__main__":
     app.run(debug=DEVELOPMENT_ENV)
