@@ -1,3 +1,5 @@
+// bikemap.tsx
+
 import React, { useState, useCallback } from 'react';
 import {
   AdvancedMarker,
@@ -6,34 +8,43 @@ import {
   InfoWindow,
   Map,
   Pin,
-  useAdvancedMarkerRef
+  useAdvancedMarkerRef,
 } from '@vis.gl/react-google-maps';
 
 import ControlPanel from './control-panel';
 import useNodeData from './node-data';
 
 export type AnchorPointName = keyof typeof AdvancedMarkerContext;
-const BikeMap = () => {  
-  const [dateStart, setDateStart] = useState<string | null>('2016-01-01');
-  const [dateEnd, setDateEnd] = useState<string | null>('2026-01-01');
-  const [timeStart, setTimeStart] = useState<string | null>('00:00');
-  const [timeEnd, setTimeEnd] = useState<string | null>('00:00');
-  const [zeroRides, setZeroRides] = useState(0);
-  const [proportion, setProportion] = useState(0.0);
 
-  const nodes = useNodeData({ zeroRides, proportion, dateStart, dateEnd, timeStart, timeEnd });
+const BikeMap = () => {
+  const [dateStart, setDateStart] = useState<string>('2019-06-01');
+  const [dateEnd, setDateEnd] = useState<string>('2019-06-02');
+  const [timeStart, setTimeStart] = useState<string>('00:00');
+  const [timeEnd, setTimeEnd] = useState<string>('23:59');
+  const [zeroRides, setZeroRides] = useState<number>(0);
+  const [proportion, setProportion] = useState<number>(0.0);
+
+  const { data: nodes, accuracy } = useNodeData({
+    zeroRides,
+    proportion,
+    dateStart,
+    dateEnd,
+    timeStart,
+    timeEnd,
+  });
   const Z_INDEX_SELECTED = nodes.length;
   const Z_INDEX_HOVER = nodes.length + 1;
 
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [anchorPoint, setAnchorPoint] = useState('BOTTOM' as AnchorPointName);
+  const [anchorPoint] = useState('BOTTOM' as AnchorPointName);
   const [selectedMarker, setSelectedMarker] =
     useState<google.maps.marker.AdvancedMarkerElement | null>(null);
-  const [infoWindowShown, setInfoWindowShown] = useState(false);
+  const [infoWindowShown, setInfoWindowShown] = useState<boolean>(false);
 
   const onMouseEnter = useCallback((id: string | null) => setHoverId(id), []);
   const onMouseLeave = useCallback(() => setHoverId(null), []);
+
   const onMarkerClick = useCallback(
     (id: string | null, marker?: google.maps.marker.AdvancedMarkerElement) => {
       setSelectedId(id);
@@ -45,7 +56,7 @@ const BikeMap = () => {
       if (id !== selectedId) {
         setInfoWindowShown(true);
       } else {
-        setInfoWindowShown(isShown => !isShown);
+        setInfoWindowShown((isShown) => !isShown);
       }
     },
     [selectedId]
@@ -62,17 +73,42 @@ const BikeMap = () => {
     []
   );
 
-  const updateNodes = (newZeroRides: number, newProportion: number, newDateStart: string | null, newDateEnd: string | null,
-     newTimeStart: string | null, newTimeEnd: string | null) => {
-    console.log("old parameters:", zeroRides, proportion, dateStart, dateEnd, timeStart, timeEnd);
+  const updateNodes = (
+    newZeroRides: number,
+    newProportion: number,
+    newDateStart: string,
+    newDateEnd: string,
+    newTimeStart: string,
+    newTimeEnd: string
+  ) => {
+    console.log(
+      'old parameters:',
+      zeroRides,
+      proportion,
+      dateStart,
+      dateEnd,
+      timeStart,
+      timeEnd
+    );
     setZeroRides(newZeroRides);
     setProportion(newProportion);
     setDateStart(newDateStart);
     setDateEnd(newDateEnd);
     setTimeStart(newTimeStart);
     setTimeEnd(newTimeEnd);
-    console.log("new parameters:", newZeroRides, newProportion, newDateStart, newDateEnd, newTimeStart, newTimeEnd);
+    console.log(
+      'new parameters:',
+      newZeroRides,
+      newProportion,
+      newDateStart,
+      newDateEnd,
+      newTimeStart,
+      newTimeEnd
+    );
   };
+
+  // Find the selected node to access its properties in the InfoWindow
+  const selectedNode = nodes.find((node) => node.id === selectedId);
 
   return (
     <>
@@ -84,6 +120,7 @@ const BikeMap = () => {
         timeStart={timeStart}
         timeEnd={timeEnd}
         updateNodes={updateNodes}
+        accuracy={accuracy}
       />
       <Map
         mapId={'someMapId'}
@@ -93,7 +130,7 @@ const BikeMap = () => {
         disableDefaultUI={true}
         onClick={onMapClick}
       >
-        {nodes.map(({ id, zIndex: zIndexDefault, position, type }) => {
+        {nodes.map(({ id, zIndex: zIndexDefault, position, type, source }) => {
           let zIndex = zIndexDefault;
 
           if (hoverId === id) {
@@ -104,7 +141,9 @@ const BikeMap = () => {
             zIndex = Z_INDEX_SELECTED;
           }
 
-          if (type === 'pin') {
+          if (type === 'pin' || type === 'prediction') {
+            const isPrediction = source === 'predictions';
+
             return (
               <AdvancedMarkerWithRef
                 key={id}
@@ -116,14 +155,34 @@ const BikeMap = () => {
                 zIndex={zIndex}
                 className="custom-marker"
                 style={{
-                  transform: `scale(${[hoverId, selectedId].includes(id) ? 1.4 : 1})`
+                  transform: `scale(${
+                    [hoverId, selectedId].includes(id) ? 1.4 : 1
+                  })`,
                 }}
                 position={position}
               >
                 <Pin
-                  background={selectedId === id ? '#22ccff' : undefined}
-                  borderColor={selectedId === id ? '#1e89a1' : undefined}
-                  glyphColor={selectedId === id ? '#0f677a' : undefined}
+                  background={
+                    selectedId === id
+                      ? '#22ccff'
+                      : isPrediction
+                      ? '#ffcc00'
+                      : undefined
+                  }
+                  borderColor={
+                    selectedId === id
+                      ? '#1e89a1'
+                      : isPrediction
+                      ? '#ff9900'
+                      : undefined
+                  }
+                  glyphColor={
+                    selectedId === id
+                      ? '#0f677a'
+                      : isPrediction
+                      ? '#cc6600'
+                      : undefined
+                  }
                 />
               </AdvancedMarkerWithRef>
             );
@@ -138,7 +197,9 @@ const BikeMap = () => {
                   anchorPoint={AdvancedMarkerContext[anchorPoint]}
                   className="custom-marker"
                   style={{
-                    transform: `scale(${[hoverId, selectedId].includes(id) ? 1.4 : 1})`
+                    transform: `scale(${
+                      [hoverId, selectedId].includes(id) ? 1.4 : 1
+                    })`,
                   }}
                   onMarkerClick={(
                     marker: google.maps.marker.AdvancedMarkerElement
@@ -147,11 +208,13 @@ const BikeMap = () => {
                   onMouseLeave={onMouseLeave}
                 >
                   <div
-                    className={`custom-html-content ${selectedId === id ? 'selected' : ''}`}
+                    className={`custom-html-content ${
+                      selectedId === id ? 'selected' : ''
+                    }`}
                   ></div>
                 </AdvancedMarkerWithRef>
 
-                {/* anchor point visualization marker */}
+                {/* Anchor point visualization marker */}
                 <AdvancedMarkerWithRef
                   onMarkerClick={(
                     marker: google.maps.marker.AdvancedMarkerElement
@@ -171,13 +234,20 @@ const BikeMap = () => {
           return null;
         })}
 
-        {infoWindowShown && selectedMarker && (
+        {infoWindowShown && selectedMarker && selectedNode && (
           <InfoWindow
             anchor={selectedMarker}
             onCloseClick={handleInfowindowCloseClick}
           >
-            <h2>Marker {selectedId}</h2>
-            <p>Some arbitrary html to be rendered into the InfoWindow.</p>
+            <h2>
+              {selectedNode.source === 'predictions' ? 'Prediction' : 'Marker'}{' '}
+              {selectedId}
+            </h2>
+            <p>
+              {selectedNode.source === 'predictions'
+                ? 'This is a predicted at-risk bike stand.'
+                : 'This is an existing bike stand.'}
+            </p>
           </InfoWindow>
         )}
       </Map>

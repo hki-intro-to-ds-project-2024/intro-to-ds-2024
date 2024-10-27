@@ -1,4 +1,3 @@
-
 from src.config import DATA_DIR, INITIALIZE_DATABASE, FILTERING_FRACTION, MODEL_TO_USE, Model
 from src.db.timescale import TimescaleClient
 from src.ml.prophet_wrapper import ProphetWrapper
@@ -108,13 +107,14 @@ class Analytics:
     def get_predictions_json(self, time_start, time_end, zero_rides):
         coord_dict = self.__timescale_connection.get_coord_dict()
         node_dict = self.predict(time_start, time_end)
+        self.__logger.info(node_dict)
         predictions = []
         for i, node in enumerate(node_dict):
             lat, lng = coord_dict[node]
             zero_rides_pred = 0
             for date in node_dict[node]:
                 zero_rides_pred += int(node_dict[node][date])
-            if zero_rides_pred > int(zero_rides):
+            if zero_rides_pred >= int(zero_rides):
                 predictions.append({
                     'position': {'lat': lat, 'lng': lng},
                     'rides': int(zero_rides_pred),
