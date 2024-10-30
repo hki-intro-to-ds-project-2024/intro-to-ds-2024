@@ -268,11 +268,6 @@ ggmap(map_centre) +
 
 
 
-
-#*--- 0L-rides at different times ----------------------------------------------
-# Weekday/weekend, morning/day/evening/night etc.
-
-
 #*--- Plot visualising number of 0L-rides in time ------------------------------
 stations_intime_day <- stations_intime %>%
   mutate(day = date(Departure)) %>% group_by(day) %>%
